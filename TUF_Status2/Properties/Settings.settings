@@ -1,0 +1,21 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="TUFStatus.Properties" GeneratedClassName="Settings">
+  <Profiles />
+  <Settings>
+    <Setting Name="tufman_installation_id" Type="System.Int32" Scope="Application">
+      <Value Profile="(Default)">22</Value>
+    </Setting>
+    <Setting Name="cloud_server" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">rimf.ffa.int</Value>
+    </Setting>
+    <Setting Name="cloud_server_driver" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">postgreSQL35W</Value>
+    </Setting>
+    <Setting Name="local_DB_driver" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">sqlite</Value>
+    </Setting>
+    <Setting Name="local_db_file" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">tuf_status.sqlite</Value>
+    </Setting>
+  </Settings>
+</SettingsFile>
