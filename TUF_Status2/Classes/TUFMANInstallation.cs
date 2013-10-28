@@ -34,7 +34,8 @@ namespace TUFStatus
             IMSPortal=1,
             TUFMAN=2,
             TUFStatus=3,
-            TUFART=4
+            TUFART=4,
+            TUFStatusSPC = 5
         }
 
         public bool SetInstallationDetails(TUFStatus.Domain.Cloud.App.Installations installation)
@@ -178,6 +179,34 @@ namespace TUFStatus
                     error = true;
                     message = ex.Message;
                     ErrorHandler.Instance.HandleError(actionTypeID, "", "There was an error running the Sync, mode=" + mode, ex.Message);
+                }
+
+                actionLog = new ActionLog(installation_id, ApplicationList.TUFStatus, actionTypeID, "", result, message, error);
+            }
+            return actionLog;
+        }
+
+        public ActionLog RunSPCSync()
+        {
+            ActionLog actionLog = null;
+            int result = 0;
+            string message = "";
+            bool error = false;
+            ActionLog.ActionTypes actionTypeID = ActionLog.ActionTypes.Syncronisation;
+
+            if (run_sync > 0)
+            {
+                try
+                {
+                    Classes.Synchroniser synchroniser = new Classes.Synchroniser();
+                    result = synchroniser.SynchroniseWithSPC((CloudStatusDB)Program.cloudStatusDB);
+                    message = "Syncronisation successful";
+                }
+                catch (Exception ex)
+                {
+                    error = true;
+                    message = ex.Message;
+                    ErrorHandler.Instance.HandleError(actionTypeID, "", "There was an error running the SPC Sync", ex.Message);
                 }
 
                 actionLog = new ActionLog(installation_id, ApplicationList.TUFStatus, actionTypeID, "", result, message, error);

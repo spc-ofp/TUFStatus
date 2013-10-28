@@ -37,7 +37,26 @@ namespace TUFStatus.DAL.Configuration
             //    })
 
             return config.BuildSessionFactory();
+        }
 
+        public static ISessionFactory CreateSessionFactory(string portalServer, string portalDatabase)
+        {
+            FluentNHibernate.Cfg.FluentConfiguration config = Fluently.Configure()
+                .Database(PostgreSQLConfiguration.Standard
+                .ConnectionString(c => c
+                .Host(portalServer)       //202.4.229.96
+                .Port(5432)
+                .Database(portalDatabase)
+                .Username("ofp_admin")
+                .Password("ofp_admin")))
+                .Mappings(m => m.FluentMappings.AddFromAssemblyOf<IMS.DAL.Maps.Ves.VesselCategoriesMap>());
+
+            //.ExposeConfiguration(con =>
+            //    {
+            //        con.SetProperty("adonet.batch_size", "1");
+            //    })
+
+            return config.BuildSessionFactory();
         }
     }
 }

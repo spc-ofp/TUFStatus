@@ -103,6 +103,7 @@
     <Compile Include="Classes\TextLog.cs" />
     <Compile Include="Classes\TUFMANInstallation.cs" />
     <Compile Include="DAL\Configuration\IMSNHibernateHelper.cs" />
+    <Compile Include="DAL\Configuration\SPCNHibernateHelper.cs" />
     <Compile Include="DAL\Infrastructure\IEntity.cs" />
     <Compile Include="DAL\IRepository.cs" />
     <Compile Include="DAL\IStatusDB.cs" />
@@ -160,6 +161,10 @@
     <ProjectReference Include="..\LocalStatusDB_DAL\LocalStatusDB_DAL\LocalStatusDB_DAL.csproj">
       <Project>{91cbaa66-13d7-4939-9688-0c6f2f461cee}</Project>
       <Name>LocalStatusDB_DAL</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\SyncDB_DAL\SyncDB_DAL.csproj">
+      <Project>{a4e3511a-6b21-4b03-978f-c9b3243cd34f}</Project>
+      <Name>SyncDB_DAL</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

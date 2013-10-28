@@ -80,22 +80,7 @@ namespace TUFStatus.Classes
                     // delete all records first
                     var xa = destinationSession.BeginTransaction();
 
-                    ///var metaData = destinationSession.SessionFactory.GetClassMetadata(typeof(T)) as NHibernate.Persister.Entity.AbstractEntityPersister;
-                    ///string table = metaData.TableName;
-                    ///string deleteAll = string.Format("DELETE FROM \"{0}\"", table);
-                    ///destinationSession.CreateSQLQuery(deleteAll).ExecuteUpdate();
-                    //destinationSession.Delete("Select * from " + typeof(T));
-
                     destinationSession.Delete("from " + typeof(T));
-
-
-                    //TUFStatus.DAL.Repositories.Repository<ISession, T> destRepo = new TUFStatus.DAL.Repositories.Repository<ISession, T>(destinationSession);
-
-                    //List<T> deleteList = sourceRepo.All().ToList() ;
-                    //foreach (T deleteItem in deleteList)
-                    //{
-                    //    destRepo.Delete(deleteItem);
-                    //}
 
                     xa.Commit();
 

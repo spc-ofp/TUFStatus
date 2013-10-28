@@ -30,7 +30,7 @@ namespace TUFStatus.Classes
             {
                 var repository = new TUFStatus.DAL.Repositories.Repository<ISession, Domain.Cloud.App.Sync>(cloudStatusDB.session);
                 //var xa = cloudStatusDB.session.BeginTransaction();
-                syncList = repository.FilterBy(x => x.installation.installation_id == installationID).OrderBy(x => x.sync_order).ToList();
+                syncList = repository.FilterBy(x => x.installation.installation_id == installationID && x.application.application_id == (int)TUFStatus.TUFMANInstallation.ApplicationList.TUFStatus).OrderBy(x => x.sync_order).ToList();
                 
                 //xa.Dispose();
                 //xa.Rollback();
@@ -248,10 +248,199 @@ namespace TUFStatus.Classes
                 if (IMSSession!=null && IMSSession.IsOpen)
                     IMSSession.Close();
 
+                if (IMSStatelessSession != null && IMSStatelessSession.IsOpen)
+                    IMSStatelessSession.Close();
+
                 //IMSNHibernateHelper.SessionFactory.Close();
 
                 if (tufmanSession != null && tufmanSession.IsOpen)
                     tufmanSession.Close();
+            }
+
+            return result;
+        }
+
+        public int SynchroniseWithSPC(CloudStatusDB cloudStatusDB)
+        {
+            // synchronises from the cloud portal db to tufsync_xx at SPC. The tables to be synchronised are stored in the app.sync folder of the tufsync_control db.
+            int result = 0;
+            ISession IMSSession = null;
+            IStatelessSession IMSStatelessSession = null;
+            ISession spcSession = null;
+            IStatelessSession spcStatelessSession = null;
+            SyncDirection syncDirection;
+            SyncType syncType;
+
+            // retrieve a list of the synchronisation items
+            List<TUFStatus.Domain.Cloud.App.Sync> syncList;
+            try
+            {
+                var repository = new TUFStatus.DAL.Repositories.Repository<ISession, Domain.Cloud.App.Sync>(cloudStatusDB.session);
+                //var xa = cloudStatusDB.session.BeginTransaction();
+                syncList = repository.FilterBy(x => x.application.application_id == (int)TUFStatus.TUFMANInstallation.ApplicationList.TUFStatusSPC).OrderBy(x => x.installation.installation_id).ThenBy(x => x.sync_order).ToList();
+
+                //xa.Dispose();
+                //xa.Rollback();
+
+                foreach (TUFStatus.Domain.Cloud.App.Sync syncItem in syncList)
+                {
+                    string tablename;
+                    int tableResult = 0;
+                    string countryCode;
+                    string portalDatabase;
+                    string portalServer;
+                    string spcSyncDB;
+
+                    // Tufman installation information comes from the 'installation' object of the sync item, i.e. the installation_id field of the sync table
+                    portalDatabase = syncItem.installation.portal_database;
+                    portalServer = syncItem.installation.portal_server;
+                    spcSyncDB = "tufsync_" + syncItem.installation.country_code.ToLower();
+
+                    // Cloud IMS session
+                    IMSSession = TUFStatus.DAL.Configuration.IMSNHibernateHelper.CreateSessionFactory(portalServer,portalDatabase).OpenSession();
+                    IMSStatelessSession = TUFStatus.DAL.Configuration.IMSNHibernateHelper.CreateSessionFactory(portalServer, portalDatabase).OpenStatelessSession();
+
+                    spcSession = SPCNHibernateHelper.CreateSessionFactory(spcSyncDB).OpenSession();
+                    spcStatelessSession = SPCNHibernateHelper.CreateSessionFactory(spcSyncDB).OpenStatelessSession();
+
+                    tablename = syncItem.schemaname + "." + syncItem.tablename;
+
+                    countryCode = Program.tufmanInstallation.CountryCode();
+
+                    // Check the direction of syncronisation to do
+                    switch (syncItem.direction_code)
+                    {
+                        case "up": // merge or replace
+                            syncDirection = SyncDirection.Up;
+                            break;
+                        case "dn": // replace
+                            syncDirection = SyncDirection.Down;
+                            break;
+                        default: // anything else, only "up" is supported at present though
+                            syncDirection = SyncDirection.Up;
+                            break;
+                    }
+
+                    // Check the type of syncronisation to do
+                    switch (syncItem.sync_type_code)
+                    {
+                        case "mr": // merge or replace
+                            syncType = SyncType.Merge;
+                            break;
+                        case "rp": // replace
+                            syncType = SyncType.Replace;
+                            break;
+                        case "dl": // delete
+                            syncType = SyncType.Delete;
+                            break;
+                        default: // 'mg' - merge only
+                            syncType = SyncType.MergeOrReplace;
+                            break;
+                    }
+
+                    // set sync mode to replace if mode is 'full' and sync type is merge or replace
+                    //if (mode == 1)
+                    //{
+                    //    if (syncType == SyncType.MergeOrReplace)
+                    //        syncType = SyncType.Replace;
+                    //}
+
+                    // checked the last sync date, if null then sync becomes 'replace'
+                    if (syncItem.sync_date == null & syncType != SyncType.Delete)
+                        syncType = SyncType.Replace;
+
+
+
+                    // ********************* need to add filtering to this **************************** //
+                    if (syncType == SyncType.Delete)
+                    {
+                        if (syncDirection == SyncDirection.Down)
+                        {
+                            switch (tablename.ToLower())
+                            {
+                                case "lic.agr_rep_period":
+                                    TableSynchroniser<TUFMAN.Domain.Lic.AgrRepPeriod> ts11 = new TableSynchroniser<TUFMAN.Domain.Lic.AgrRepPeriod>();
+                                    tableResult = ts11.SynchroniseTableDeletes(IMSSession, spcSession,  x => (x.changed_date >= syncItem.sync_date), syncItem.sync_date, syncItem.table_id);
+                                    break;
+                                default:
+                                    // report an error here, table is not recognised and won't be synchronised
+                                    break;
+                            }
+                        }
+                        else           // up is the default
+                        {
+                            switch (tablename.ToLower())
+                            {
+                                case "lic.agr_rep_period":
+                                    TableSynchroniser<TUFMAN.Domain.Lic.AgrRepPeriod> ts11 = new TableSynchroniser<TUFMAN.Domain.Lic.AgrRepPeriod>();
+                                    tableResult = ts11.SynchroniseTableDeletes(spcSession, IMSSession, x => (x.changed_date >= syncItem.sync_date), syncItem.sync_date, syncItem.table_id);
+                                    break;
+                                default:
+                                    // report an error here, table is not recognised and won't be synchronised
+                                    break;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (syncDirection == SyncDirection.Down)
+                        {
+                            switch (tablename.ToLower())
+                            {
+                                case "ves.vessels":
+                                    TableSynchroniser<TUFMAN.Domain.Ves.Vessels> ts1 = new TableSynchroniser<TUFMAN.Domain.Ves.Vessels>();
+
+                                    tableResult = ts1.SynchroniseTable(IMSSession,spcSession,  spcStatelessSession, x => (x.changed_date >= syncItem.sync_date), syncDirection, syncType, false);
+                                    break;
+                                default:
+                                    // report an error here, table is not recognised and won't be synchronised
+                                    break;
+                            }
+                        }
+                        else           // up is the default
+                        {
+                            switch (tablename.ToLower())
+                            {
+                                case "ves.vessels":
+                                    TableSynchroniser<TUFMAN.Domain.Ves.Vessels> ts1 = new TableSynchroniser<TUFMAN.Domain.Ves.Vessels>();
+
+                                    tableResult = ts1.SynchroniseTable(spcSession, IMSSession, IMSStatelessSession, x => (x.changed_date >= syncItem.sync_date), syncDirection, syncType, false);
+                                    break;
+                                default:
+                                    // report an error here, table is not recognised and won't be synchronised
+                                    break;
+                            }
+                        }
+                    }
+                    var xa = cloudStatusDB.session.BeginTransaction();
+                    syncItem.last_run_date = DateTime.Now;
+                    syncItem.last_run_result = tableResult;
+                    if (tableResult >= 0)
+                    {
+                        result += tableResult;
+                        syncItem.sync_date = DateTime.Now;
+                    }
+                    xa.Commit();
+
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorHandler.Instance.HandleError(ActionLog.ActionTypes.Application, "", "There was an error running the synchroniser:", ex.Message);
+                return -1;
+            }
+            finally
+            {
+                if (IMSSession != null && IMSSession.IsOpen)
+                    IMSSession.Close();
+
+                if (IMSStatelessSession != null && IMSStatelessSession.IsOpen)
+                    IMSStatelessSession.Close();
+
+                //IMSNHibernateHelper.SessionFactory.Close();
+
+                if (spcSession != null && spcSession.IsOpen)
+                    spcSession.Close();
             }
 
             return result;

@@ -35,6 +35,7 @@
             this.buttonClearLocalLogs = new System.Windows.Forms.Button();
             this.buttonViewLocalLogs = new System.Windows.Forms.Button();
             this.buttonRunSync = new System.Windows.Forms.Button();
+            this.buttonSPCSync = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // buttonRunRecon
@@ -107,11 +108,22 @@
             this.buttonRunSync.UseVisualStyleBackColor = true;
             this.buttonRunSync.Click += new System.EventHandler(this.buttonRunSync_Click);
             // 
+            // buttonSPCSync
+            // 
+            this.buttonSPCSync.Location = new System.Drawing.Point(152, 284);
+            this.buttonSPCSync.Name = "buttonSPCSync";
+            this.buttonSPCSync.Size = new System.Drawing.Size(158, 30);
+            this.buttonSPCSync.TabIndex = 7;
+            this.buttonSPCSync.Text = "Run SPC Sync";
+            this.buttonSPCSync.UseVisualStyleBackColor = true;
+            this.buttonSPCSync.Click += new System.EventHandler(this.buttonSPCSync_Click);
+            // 
             // FormMain
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(473, 429);
+            this.Controls.Add(this.buttonSPCSync);
             this.Controls.Add(this.buttonRunSync);
             this.Controls.Add(this.buttonViewLocalLogs);
             this.Controls.Add(this.buttonClearLocalLogs);
@@ -134,6 +146,7 @@
         private System.Windows.Forms.Button buttonClearLocalLogs;
         private System.Windows.Forms.Button buttonViewLocalLogs;
         private System.Windows.Forms.Button buttonRunSync;
+        private System.Windows.Forms.Button buttonSPCSync;
     }
 }
 

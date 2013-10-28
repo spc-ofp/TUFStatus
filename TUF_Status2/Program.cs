@@ -44,6 +44,7 @@ namespace TUFStatus
 
             Program.TextLogFile.WriteLog("Application started : mode=" + RunMode.ToString());
 
+
             // ---------------------------------------------------------------------------------------
             // initialisation of parameters
             // ---------------------------------------------------------------------------------------            
@@ -131,7 +132,9 @@ namespace TUFStatus
                     RunPostEntryProcessing(1);
                     RunBackup(0);
                     RunSync(0);
-
+                    break;
+                case 3:     // SPC Sync mode
+                    RunSPCSync();
                     break;
             }
 
@@ -185,13 +188,29 @@ namespace TUFStatus
 
         public static bool RunSync(int mode)
         {
-            // runs the recon in TUFMAN
+            // runs the TUFMAN->Portal sync
             // mode 0 = partial, 1 = full
             bool hadError = false;
 
             ActionLog actionLog;
 
             actionLog = tufmanInstallation.RunSync(mode);
+            hadError = actionLog.HadError;
+            if (actionLog != null)
+                localStatusDB.WriteActionLog(actionLog);
+
+            return !hadError;
+        }
+
+        public static bool RunSPCSync()
+        {
+            // runs the recon in TUFMAN
+            // mode 0 = partial, 1 = full
+            bool hadError = false;
+
+            ActionLog actionLog;
+
+            actionLog = tufmanInstallation.RunSPCSync();
             hadError = actionLog.HadError;
             if (actionLog != null)
                 localStatusDB.WriteActionLog(actionLog);

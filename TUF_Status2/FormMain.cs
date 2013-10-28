@@ -136,5 +136,16 @@ namespace TUFStatus
             Cursor.Current = Cursors.Default;
             MessageBox.Show("Finished");
         }
+
+        private void buttonSPCSync_Click(object sender, EventArgs e)
+        {
+            Classes.Synchroniser synchroniser = new Classes.Synchroniser();
+            int result = 0;
+
+            Cursor.Current = Cursors.WaitCursor;
+            result = synchroniser.SynchroniseWithSPC((CloudStatusDB)Program.cloudStatusDB);
+            Cursor.Current = Cursors.Default;
+            MessageBox.Show("Finished");
+        }
     }
 }
